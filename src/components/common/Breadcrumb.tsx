@@ -18,10 +18,13 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={index} className="flex items-center gap-1.5">
+            <li
+              key={index}
+              className={cn('items-center gap-1.5', isLast ? 'flex' : 'hidden sm:flex')}
+            >
               {index > 0 && (
                 <svg
-                  className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                  className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:block"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

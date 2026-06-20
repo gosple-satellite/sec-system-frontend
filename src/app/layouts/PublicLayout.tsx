@@ -323,10 +323,11 @@ export function PublicLayout() {
                   logout();
                   navigate(ROUTES.AUTH.LOGIN);
                 }}
-                className="flex items-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 text-sm font-semibold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-sm border border-red-100 dark:border-red-900/30"
+                className="flex items-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 text-sm font-semibold px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all active:scale-95 shadow-sm border border-red-100 dark:border-red-900/30"
+                title="Sign Out"
               >
                 <span>🚪</span>
-                <span>Sign Out</span>
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             )}
           </div>

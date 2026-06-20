@@ -20,7 +20,7 @@ export function GuestRoute() {
       return <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />;
     if (user.role === USER_ROLES.RESIDENT)
       return <Navigate to={ROUTES.RESIDENT.DASHBOARD} replace />;
-    return <Navigate to={ROUTES.VISITOR.STATUS} replace />;
+    return <Navigate to={ROUTES.VISITOR.DASHBOARD} replace />;
   }
 
   return <Outlet />;

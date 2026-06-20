@@ -74,7 +74,7 @@ const DEMO_USERS: Record<string, { user: User; tokens: AuthTokens }> = {
 const DEMO_REDIRECT: Record<string, string> = {
   SUPER_ADMIN: ROUTES.ADMIN.DASHBOARD,
   RESIDENT: ROUTES.RESIDENT.DASHBOARD,
-  VISITOR: ROUTES.VISITOR.STATUS,
+  VISITOR: ROUTES.VISITOR.DASHBOARD,
 };
 
 export function LoginPage() {
