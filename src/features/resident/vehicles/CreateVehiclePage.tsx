@@ -1,31 +1,45 @@
-﻿// ============================================================
-// Add Vehicle - Resident Module
-// TODO: Assigned to Developer 2
+// ============================================================
+// Create Vehicle - Resident Module
 // ============================================================
 
-import { Card, CardHeader } from '@components/ui';
+import { Card, Input, Button, Select } from '@components/ui';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@constants/index';
 
 export function CreateVehiclePage() {
+  const navigate = useNavigate();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Add Vehicle</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Register Vehicle</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Resident module &mdash; implementation pending
+          Add a new vehicle to your profile for automated gate access
         </p>
       </div>
 
-      <Card>
-        <CardHeader
-          title="Add Vehicle"
-          subtitle="This page is under development. Assigned to Developer 2."
-        />
-        <div className="mt-6 flex items-center justify-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
-          <div className="text-center">
-            <p className="text-4xl mb-3">🚧</p>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
-              Feature coming soon &mdash; Developer 2
-            </p>
+      <Card className="p-6">
+        <div className="space-y-5">
+          <Input label="Vehicle Make & Model" placeholder="e.g. Toyota Camry 2020" />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="License Plate Number" placeholder="e.g. ABJ-123-XY" />
+            <Input label="Vehicle Color" placeholder="e.g. Silver" />
+          </div>
+          <Select
+            label="Vehicle Type"
+            options={[
+              { label: 'Sedan', value: 'sedan' },
+              { label: 'SUV', value: 'suv' },
+              { label: 'Truck / Pickup', value: 'truck' },
+              { label: 'Motorcycle', value: 'motorcycle' },
+            ]}
+          />
+
+          <div className="pt-4 flex justify-end gap-3">
+            <Button variant="outline" onClick={() => navigate(ROUTES.RESIDENT.VEHICLES)}>
+              Cancel
+            </Button>
+            <Button onClick={() => navigate(ROUTES.RESIDENT.VEHICLES)}>Submit Registration</Button>
           </div>
         </div>
       </Card>

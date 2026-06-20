@@ -1,33 +1,50 @@
-﻿// ============================================================
-// Create Visitor Pass - Resident Module
-// TODO: Assigned to Developer 2
+// ============================================================
+// Generate Visitor Pass - Resident Module
 // ============================================================
 
-import { Card, CardHeader } from '@components/ui';
+import { Card, Input, Button, Select } from '@components/ui';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@constants/index';
 
 export function CreateVisitorPassPage() {
+  const navigate = useNavigate();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8 max-w-2xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Create Visitor Pass
+          Generate Visitor Pass
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Resident module &mdash; implementation pending
+          Create a digital gate pass for your upcoming guest
         </p>
       </div>
 
-      <Card>
-        <CardHeader
-          title="Create Visitor Pass"
-          subtitle="This page is under development. Assigned to Developer 2."
-        />
-        <div className="mt-6 flex items-center justify-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
-          <div className="text-center">
-            <p className="text-4xl mb-3">🚧</p>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
-              Feature coming soon &mdash; Developer 2
-            </p>
+      <Card className="p-6">
+        <div className="space-y-5">
+          <Input label="Visitor Full Name" placeholder="e.g. Michael Johnson" />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Phone Number" placeholder="e.g. 08012345678" />
+            <Select
+              label="Visitor Category"
+              options={[
+                { label: 'Family Member', value: 'family' },
+                { label: 'Friend', value: 'friend' },
+                { label: 'Service / Artisan', value: 'service' },
+                { label: 'Delivery', value: 'delivery' },
+              ]}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Expected Arrival Date" type="date" />
+            <Input label="Expected Arrival Time" type="time" />
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3">
+            <Button variant="outline" onClick={() => navigate(ROUTES.RESIDENT.VISITORS)}>
+              Cancel
+            </Button>
+            <Button onClick={() => navigate(ROUTES.RESIDENT.VISITORS)}>Generate Passcode</Button>
           </div>
         </div>
       </Card>
