@@ -12,6 +12,7 @@ import { LoginPage } from '@features/auth/LoginPage';
 import { ForgotPasswordPage } from '@features/auth/ForgotPasswordPage';
 
 // Visitor Pages
+import { VisitorDashboardPage } from '@features/visitor/dashboard/VisitorDashboardPage';
 import { VerifyPassPage } from '@features/visitor/verify-pass/VerifyPassPage';
 import { VisitorStatusPage } from '@features/visitor/visitor-status/VisitorStatusPage';
 
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
     children: [
+      { path: ROUTES.VISITOR.DASHBOARD, element: <VisitorDashboardPage /> },
       { path: ROUTES.VISITOR.PASS, element: <VerifyPassPage /> },
       { path: ROUTES.VISITOR.STATUS, element: <VisitorStatusPage /> },
     ],

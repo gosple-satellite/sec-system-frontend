@@ -24,6 +24,7 @@ export const ROUTES = {
   },
   // Visitor (Public)
   VISITOR: {
+    DASHBOARD: '/visitor',
     PASS: '/visitor/pass',
     STATUS: '/visitor/status',
   },

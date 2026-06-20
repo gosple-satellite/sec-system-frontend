@@ -22,19 +22,79 @@ const verifySchema = z.object({
     .trim(),
 });
 
-const registerSchema = z.object({
-  visitorName: z.string().min(3, 'Full name must be at least 3 characters').trim(),
-  visitorPhone: z.string().min(8, 'Phone number must be at least 8 digits').trim(),
-  visitorEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
-  purpose: z.string().min(1, 'Please select a purpose of entry'),
-  destination: z.string().min(1, 'Please select a destination'),
-  entryDate: z.string().min(1, 'Please select entry date and time'),
-});
+const registerSchema = z
+  .object({
+    visitorName: z.string().min(3, 'Full name must be at least 3 characters').trim(),
+    visitorPhone: z.string().min(8, 'Phone number must be at least 8 digits').trim(),
+    visitorEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
+    purpose: z.string().min(1, 'Please select a purpose of entry'),
+    destination: z.string().min(1, 'Please select a destination'),
+    entryDate: z.string().min(1, 'Please select entry date and time'),
+    // Vehicle fields
+    hasVehicle: z.boolean(),
+    vehiclePlate: z.string().optional(),
+    vehicleType: z.string().optional(),
+    vehicleMake: z.string().optional(),
+    vehicleColor: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.hasVehicle) {
+      if (!data.vehiclePlate || data.vehiclePlate.trim().length < 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Plate number is required',
+          path: ['vehiclePlate'],
+        });
+      }
+      if (!data.vehicleType) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Vehicle type is required',
+          path: ['vehicleType'],
+        });
+      }
+      if (!data.vehicleMake || data.vehicleMake.trim().length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Vehicle make & model is required',
+          path: ['vehicleMake'],
+        });
+      }
+      if (!data.vehicleColor) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Vehicle colour is required',
+          path: ['vehicleColor'],
+        });
+      }
+    }
+  });
 
 type VerifyFormValues = z.infer<typeof verifySchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 // ─── Dropdown Options ─────────────────────────────────────
+const VEHICLE_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'CAR', label: '🚗 Car / Saloon' },
+  { value: 'SUV', label: '🚙 SUV / Jeep' },
+  { value: 'BUS', label: '🚌 Bus / Minibus' },
+  { value: 'TRUCK', label: '🚛 Truck / Lorry' },
+  { value: 'MOTORCYCLE', label: '🏍️ Motorcycle / Bike' },
+  { value: 'VAN', label: '🚐 Van / Pick-up' },
+];
+
+const VEHICLE_COLOR_OPTIONS: SelectOption[] = [
+  { value: 'WHITE', label: 'White' },
+  { value: 'BLACK', label: 'Black' },
+  { value: 'SILVER', label: 'Silver / Grey' },
+  { value: 'BLUE', label: 'Blue' },
+  { value: 'RED', label: 'Red' },
+  { value: 'GOLD', label: 'Gold / Champagne' },
+  { value: 'GREEN', label: 'Green' },
+  { value: 'BROWN', label: 'Brown / Maroon' },
+  { value: 'OTHER', label: 'Other' },
+];
+
 const PURPOSE_OPTIONS: SelectOption[] = [
   { value: 'HOLY_GHOST_SERVICE', label: 'Holy Ghost Service / Night of Wonders' },
   { value: 'SUNDAY_SERVICE', label: 'Sunday Worship Service' },
@@ -497,6 +557,8 @@ export function VerifyPassPage() {
   const {
     register: registerForm,
     handleSubmit: handleRegisterSubmit,
+    watch: watchRegister,
+    setValue: setRegisterValue,
     formState: { errors: registerErrors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -507,8 +569,15 @@ export function VerifyPassPage() {
       purpose: '',
       destination: '',
       entryDate: '',
+      hasVehicle: false,
+      vehiclePlate: '',
+      vehicleType: '',
+      vehicleMake: '',
+      vehicleColor: '',
     },
   });
+
+  const hasVehicle = watchRegister('hasVehicle');
 
   // ── API query (only fires when searchCode is non-empty) ──
   const { data: apiResponse, isLoading, error: apiError } = useVerifyPass(searchCode);
@@ -567,16 +636,27 @@ export function VerifyPassPage() {
       const destLabel =
         DESTINATION_OPTIONS.find((d) => d.value === values.destination)?.label ??
         values.destination;
+      const vehicleTypeLabel =
+        VEHICLE_TYPE_OPTIONS.find((v) => v.value === values.vehicleType)?.label ??
+        values.vehicleType ??
+        '';
+
       const code = `RC-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
       const entryIso = new Date(values.entryDate).toISOString();
       const expiryIso = new Date(new Date(values.entryDate).getTime() + 86400000).toISOString();
+
+      // Build vehicle summary string to embed in purpose
+      const vehicleSummary =
+        values.hasVehicle && values.vehiclePlate
+          ? ` | 🚗 ${vehicleTypeLabel} · ${values.vehicleMake || ''} · ${values.vehicleColor || ''} · Plate: ${values.vehiclePlate.toUpperCase()}`
+          : ' | 🚶 No Vehicle';
 
       const pass: VisitorPass = {
         id: `self_${Date.now()}`,
         visitorName: values.visitorName,
         visitorPhone: values.visitorPhone,
         visitorEmail: values.visitorEmail || undefined,
-        purpose: `${purposeLabel} — ${destLabel}`,
+        purpose: `${purposeLabel} — ${destLabel}${vehicleSummary}`,
         entryDate: entryIso,
         expiryDate: expiryIso,
         passCode: code,
@@ -767,66 +847,161 @@ export function VerifyPassPage() {
         <div className="space-y-5">
           {!generatedPass && (
             <Card className="shadow-md border border-slate-200/80 dark:border-slate-800/80">
-              <CardBody className="space-y-5">
+              <CardBody className="space-y-6">
                 <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-lg p-3.5">
                   <span className="text-xl shrink-0">ℹ️</span>
                   <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
-                    Fill in your details to generate a personal gate entry pass. No login required —
-                    open to the public for church programmes, deliveries, and contractor work.
+                    Fill in your details to generate a personal gate entry pass.{' '}
+                    <strong>
+                      Vehicle details are required if you are entering with a vehicle.
+                    </strong>{' '}
+                    No login needed.
                   </p>
                 </div>
 
-                <form onSubmit={handleRegisterSubmit(handleRegister)} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label="Full Name"
-                      placeholder="First and last name"
-                      error={registerErrors.visitorName?.message}
-                      {...registerForm('visitorName')}
-                      required
-                    />
-                    <Input
-                      label="Phone Number"
-                      placeholder="+234 800 000 0000"
-                      error={registerErrors.visitorPhone?.message}
-                      {...registerForm('visitorPhone')}
-                      required
-                    />
+                <form onSubmit={handleRegisterSubmit(handleRegister)} className="space-y-5">
+                  {/* ── Personal Info ─────────────────── */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+                      Personal Information
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Input
+                        label="Full Name"
+                        placeholder="First and last name"
+                        error={registerErrors.visitorName?.message}
+                        {...registerForm('visitorName')}
+                        required
+                      />
+                      <Input
+                        label="Phone Number"
+                        placeholder="+234 800 000 0000"
+                        error={registerErrors.visitorPhone?.message}
+                        {...registerForm('visitorPhone')}
+                        required
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <Input
+                        label="Email Address (Optional)"
+                        placeholder="you@example.com"
+                        error={registerErrors.visitorEmail?.message}
+                        {...registerForm('visitorEmail')}
+                      />
+                    </div>
                   </div>
 
-                  <Input
-                    label="Email Address (Optional)"
-                    placeholder="you@example.com"
-                    error={registerErrors.visitorEmail?.message}
-                    {...registerForm('visitorEmail')}
-                  />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Select
-                      label="Purpose of Visit"
-                      options={PURPOSE_OPTIONS}
-                      placeholder="Select purpose..."
-                      error={registerErrors.purpose?.message}
-                      {...registerForm('purpose')}
-                      required
-                    />
-                    <Select
-                      label="Destination"
-                      options={DESTINATION_OPTIONS}
-                      placeholder="Select destination..."
-                      error={registerErrors.destination?.message}
-                      {...registerForm('destination')}
-                      required
-                    />
+                  {/* ── Visit Details ─────────────────── */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+                      Visit Details
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Select
+                        label="Purpose of Visit"
+                        options={PURPOSE_OPTIONS}
+                        placeholder="Select purpose..."
+                        error={registerErrors.purpose?.message}
+                        {...registerForm('purpose')}
+                        required
+                      />
+                      <Select
+                        label="Destination"
+                        options={DESTINATION_OPTIONS}
+                        placeholder="Select destination..."
+                        error={registerErrors.destination?.message}
+                        {...registerForm('destination')}
+                        required
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <Input
+                        label="Entry Date & Time"
+                        type="datetime-local"
+                        error={registerErrors.entryDate?.message}
+                        {...registerForm('entryDate')}
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <Input
-                    label="Entry Date & Time"
-                    type="datetime-local"
-                    error={registerErrors.entryDate?.message}
-                    {...registerForm('entryDate')}
-                    required
-                  />
+                  {/* ── Vehicle Registration ──────────── */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    {/* Toggle header */}
+                    <button
+                      type="button"
+                      id="toggle-vehicle"
+                      onClick={() => setRegisterValue('hasVehicle', !hasVehicle)}
+                      className="w-full flex items-center justify-between px-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">🚗</span>
+                        <div className="text-left">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            Entering with a Vehicle?
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Required for all vehicle gate entry
+                          </p>
+                        </div>
+                      </div>
+                      {/* Toggle pill */}
+                      <div
+                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${hasVehicle ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                      >
+                        <span
+                          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${hasVehicle ? 'translate-x-5' : 'translate-x-0.5'}`}
+                        />
+                      </div>
+                    </button>
+
+                    {/* Vehicle fields — shown when toggled ON */}
+                    {hasVehicle && (
+                      <div className="p-4 space-y-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Input
+                            label="Plate Number"
+                            placeholder="e.g. ABC-123-XY"
+                            error={registerErrors.vehiclePlate?.message}
+                            {...registerForm('vehiclePlate')}
+                            required
+                          />
+                          <Select
+                            label="Vehicle Type"
+                            options={VEHICLE_TYPE_OPTIONS}
+                            placeholder="Select type..."
+                            error={registerErrors.vehicleType?.message}
+                            {...registerForm('vehicleType')}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <Input
+                            label="Make / Model"
+                            placeholder="e.g. Toyota Camry"
+                            error={registerErrors.vehicleMake?.message}
+                            {...registerForm('vehicleMake')}
+                            required
+                          />
+                          <Select
+                            label="Vehicle Colour"
+                            options={VEHICLE_COLOR_OPTIONS}
+                            placeholder="Select colour..."
+                            error={registerErrors.vehicleColor?.message}
+                            {...registerForm('vehicleColor')}
+                            required
+                          />
+                        </div>
+                        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg p-3">
+                          <span className="text-amber-500 shrink-0 text-sm">⚠️</span>
+                          <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                            Your vehicle plate number will be logged at the gate and must match the
+                            physical vehicle. Providing false information is a security violation.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   <Button type="submit" fullWidth isLoading={isGenerating} size="lg">
                     {isGenerating ? 'Generating Pass...' : 'Generate My Entry Pass'}
